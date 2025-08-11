@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lecture plein écran (MP4 ou YouTube)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: #000; color: #fff;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  #startBtn {
+    font-size: 1.25rem; padding: 0.8rem 1.4rem; border: 0; border-radius: 10px; cursor: pointer;
+    background: #d11a2a; color: #fff;
+  }
+  #info { color: #bbb; font-size: .95rem; text-align: center; max-width: 90ch; }
+  video, iframe { display: none; background:#000; width:100vw; height:100vh; }
+</style>
+</head>
+<body>
+
+<button id="startBtn">▶ Démarrer</button>
+<div id="info">Remplacez les constantes <code>MP4_URL</code> ou <code>YOUTUBE_URL</code> dans le code. Si <code>YOUTUBE_URL</code> est non vide, on utilisera YouTube en plein écran au clic.</div>
+
+<video id="mp4Player" controls playsinline preload="auto">
+  <!-- MP4 direct, H.264 + AAC -->
+  <source id="mp4Source" src="" type="video/mp4">
+  Votre navigateur ne supporte pas la lecture vidéo.
+</video>
+
+<!-- L'iframe YouTube sera créé dynamiquement -->
+
+<script>
+  // =================== PARAMÈTRES À REMPLACER ===================
+  // Mettez ici votre lien MP4 direct (laisser vide si vous utilisez YouTube)
+  const MP4_URL = "";
+  // Mettez ici votre lien YouTube (watch, youtu.be, ou embed). Si non vide, YouTube sera utilisé.
+  const YOUTUBE_URL = "";
+  // ===============================================================
+
+  const startBtn = document.getElementById('startBtn');
+  const mp4Player = document.getElementById('mp4Player');
+  const mp4Source = document.getElementById('mp4Source');
+
+  function isYouTubeUrl(url) {
+    return /youtube\.com|youtu\.be/.test(url);
+  }
+
+  function extractYouTubeId(url) {
+    try {
+      // formats: https://www.youtube.com/watch?v=ID, https://youtu.be/ID, https://www.youtube.com/embed/ID
+      const u = new URL(url);
+      if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split(/[?&]/)[0];
+      const v = u.searchParams.get('v');
+      return v || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function createYouTubeIframe(videoId) {
+    const params = new URLSearchParams({
+      autoplay: '1',
+      rel: '0',
+      modestbranding: '1',
+      controls: '1',
+      playsinline: '1'
+    });
+    const iframe = document.createElement('iframe');
+    iframe.id = 'ytPlayer';
+    iframe.src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.frameBorder = '0';
+    document.body.appendChild(iframe);
+    return iframe;
+  }
+
+  async function enterFullscreen(el) {
+    try {
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+    } catch (e) {
+      console.warn("Fullscreen refusé:", e);
+    }
+  }
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.style.display = 'none';
+
+    if (YOUTUBE_URL && isYouTubeUrl(YOUTUBE_URL)) {
+      const id = extractYouTubeId(YOUTUBE_URL);
+      if (!id) {
+        alert("Impossible d'extraire l'ID YouTube. Vérifiez l'URL.");
+        return;
+      }
+      const iframe = createYouTubeIframe(id);
+      iframe.style.display = 'block';
+      await enterFullscreen(iframe);
+      // YouTube se lance en autoplay=1 après le clic, pas besoin d'appeler play()
+    } else if (MP4_URL) {
+      mp4Source.src = MP4_URL;
+      mp4Player.load();
+      mp4Player.style.display = 'block';
+      try {
+        await mp4Player.play();
+      } catch (e) {
+        console.warn("Lecture MP4 refusée:", e);
+      }
+      await enterFullscreen(mp4Player);
+    } else {
+      alert("Aucune source configurée. Remplacez MP4_URL ou YOUTUBE_URL dans le code.");
+    }
+  });
+</script>
+
+</body>
+</html>
