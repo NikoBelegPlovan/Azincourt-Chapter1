@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vidéo plein écran — mode ultra épuré</title>
+<style>
+  :root {
+    --btn-bg: rgba(20,20,20,.65);
+    --btn-bg-hover: rgba(20,20,20,.85);
+    --btn-border: rgba(255,255,255,.25);
+    --btn-color: #fff;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background:#000; color:#fff;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  .center {
+    display:flex; align-items:center; justify-content:center;
+    height:100%; flex-direction:column; gap:20px;
+  }
+  .start {
+    font-size:1.15rem; padding:.8rem 1.2rem; border:0; border-radius:12px;
+    cursor:pointer; background:#d11a2a; color:#fff;
+  }
+  .wrap {
+    position: relative;
+    width: 100vw; height: 100vh;
+    background: #000; display: none; overflow:hidden;
+  }
+  .player {
+    position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;
+  }
+  .overlay {
+    position:absolute; z-index:10;
+    bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+    display:flex; align-items:center; gap:.5rem;
+    padding:.5rem .9rem; border-radius:999px;
+    background: rgba(204, 0, 0, 0.9); color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(4px);
+    cursor:pointer; user-select:none;
+  }
+  .overlay:hover { background: rgba(255, 0, 0, 1); }
+  .overlay svg { width:20px; height:20px; opacity:1; }
+  .overlay span { font-weight:bold; font-size:1rem; }
+  .hint { color:#bbb; font-size:.95rem; text-align:center; max-width:90ch; padding:0 16px; }
+</style>
+</head>
+<body>
+
+<div class="center">
+  <button class="start" id="startBtn">▶ Voir l'histoire d'Azincourt</button>
+  <div class="hint">Vivez l'histoire de l'une des plus grandes batailles du XVème siècle <b>“Azincourt”</b>.</div>
+</div>
+
+<div class="wrap" id="fsWrap">
+  <div class="overlay" id="backBtn" title="Continuer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 14l-4-4 4-4"></path>
+      <path d="M20 20h-7a4 4 0 0 1-4-4V4"></path>
+    </svg>
+    <span>Continuer</span>
+  </div>
+  <!-- Iframe YouTube injecté ici -->
+</div>
+
+<script>
+  const AZINCOURT_URL = "https://sites.google.com/d/1pzV33WzrfUF31vyMYM0G6sQnDdkNvQRl/p/1WNuEVbpCrBZOYZdu7PXwjQy-c-Fau2jZ/edit";
+  const YOUTUBE_URL = "https://youtu.be/YaXe8Y3mPqg";
+
+  const startBtn = document.getElementById('startBtn');
+  const fsWrap  = document.getElementById('fsWrap');
+  const backBtn = document.getElementById('backBtn');
+
+  function extractYouTubeId(url) {
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split(/[?&]/)[0];
+      const v = u.searchParams.get('v');
+      return v || "";
+    } catch { return ""; }
+  }
+
+  function createUltraCleanYouTubeIframe(videoId) {
+    // Paramètres pour minimiser l'UI :
+    // controls=0 (pas de barre/boutons), modestbranding=1 (logo réduit),
+    // rel=0 (pas de vidéos suggérées externes), iv_load_policy=3 (pas d'annotations),
+    // showinfo est obsolète, disablekb=1 pour éviter les raccourcis clavier,
+    // playsinline=1 pour iOS.
+    const params = new URLSearchParams({
+      autoplay: '1',
+      controls: '0',
+      disablekb: '1',
+      rel: '0',
+      modestbranding: '1',
+      iv_load_policy: '3',
+      fs: '1',
+      playsinline: '1'
+    });
+    const iframe = document.createElement('iframe');
+    iframe.className = 'player';
+    iframe.src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    return iframe;
+  }
+
+  async function enterFullscreen(el) {
+    try {
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+    } catch (e) {
+      console.warn('Fullscreen refusé :', e);
+    }
+  }
+
+  backBtn.addEventListener('click', () => {
+    try { window.close(); } catch(e) {}
+    window.location.href = AZINCOURT_URL || '/';
+  });
+
+  startBtn.addEventListener('click', async () => {
+    const id = extractYouTubeId(YOUTUBE_URL);
+    if (!id) { alert("URL YouTube invalide."); return; }
+    const iframe = createUltraCleanYouTubeIframe(id);
+    fsWrap.appendChild(iframe);
+    fsWrap.style.display = 'block';
+    document.querySelector('.center').style.display = 'none';
+    await enterFullscreen(fsWrap);
+  });
+</script>
+
+</body>
+</html>
