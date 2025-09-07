@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Henri V — Timeline & Effectifs</title>
+  <style>
+    :root{
+      --gap: 14px;
+      --btn-size: 84px; /* taille boutons */
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+    *{ box-sizing: border-box }
+    html,body{ height:100%; margin:0 }
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;
+      background: #000 url("https://github.com/NikoBelegPlovan/Azincourt-Chapter1/blob/main/Tableau-Henri-V.png?raw=true") center/cover no-repeat fixed; /* Le tableau 1 en background */
+      overflow:hidden;
+      user-select:none;
+    }
+
+    /* Pile de boutons à droite */
+    nav.ui{
+      position: fixed;
+      right: min(3vw, 28px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap);
+      z-index: 20;
+    }
+    .btn{
+      width: var(--btn-size);
+      height: var(--btn-size);
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      border-radius: 50%;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease), filter .25s var(--ease);
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      isolation: isolate;
+    }
+    .btn img{
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      border-radius: 50%;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+      transition: transform .25s var(--ease);
+    }
+    /* Pas d'anneau lumineux */
+    .btn::after{ content:""; position:absolute; inset:0; border-radius:50%; box-shadow:none !important; transition:none !important; pointer-events:none; }
+    .btn:hover{ transform: translateY(-2px) scale(1.04); }
+
+    .label{
+      margin-top: 6px;
+      font-size: 12px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.8);
+      text-shadow: 0 1px 2px rgba(0,0,0,.6);
+      text-align: center;
+    }
+
+    /* Overlay générique (utilisé par Héraldiques & Stats) */
+    .overlay{
+      position: fixed; inset: 0; z-index: 10;
+      display: grid; place-items: center;
+      background: transparent;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .35s var(--ease), visibility .35s var(--ease);
+    }
+    .overlay.show{ opacity: 1; visibility: visible; pointer-events: auto; }
+
+    /* Image d'overlay héraldique à l'échelle du viewport */
+    #heraldicOverlay img{
+      width: 100vw; height: 100vh; object-fit: contain;
+      display:block; box-shadow:none; border-radius:0; transform:none; transition:none;
+      background: rgba(0,0,0,.45); /* voile discret si image plus petite */
+    }
+
+    /* --- Overlay stats (thème médiéval) --- */
+    #statsOverlay{ z-index:12; background: transparent; display:flex; justify-content:flex-end; align-items:center; padding-right:min(22vw, 240px); }
+    #statsOverlay .stats{ width:min(760px, 60vw); max-height:92vh; background:transparent; border:none; box-shadow:none; border-radius:0; padding:10px 0; color:#eee7d6; display:grid; grid-template-rows:auto auto 1fr auto; gap:8px; margin-right:max(3vw, 24px); }
+    #statsOverlay h2{ margin:0 0 6px 0; font-size:22px; letter-spacing:.6px; font-family:'Charlemagne Std','Cinzel',serif; font-weight:700; text-shadow:0 1px 0 rgba(0,0,0,.5); text-align:left; }
+    /* Bouton narration */
+    .stats-list{
+      list-style: none; margin: 0; padding: 8px 2px 2px;
+      display: grid; gap: 12px;
+    }
+    .stats-list .stat{
+      display: grid;
+      grid-template-columns: 44px 150px 1fr 90px;
+      align-items: center; gap: 10px;
+    }
+    .stats-list .ico{ width: 40px; height: 40px; object-fit: contain; display:block;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+    .stats-list .label{ font-size: 14px; color: #f0ead9; text-align: left;
+      font-variant: small-caps; letter-spacing: .4px; text-shadow: 0 1px 0 rgba(0,0,0,.55);  font-family:'Cinzel', serif; }
+    /* Lance (barre) */
+    .stats-list .spear{
+      position: relative; height: 20px; border-radius: 999px;
+      background: rgba(230,210,150,.16); overflow: visible; isolation: isolate;
+    }
+    .stats-list .spear .shaft{
+      position: absolute; left: 0; top: 50%; height: 6px; transform: translateY(-50%);
+      width: 0%;
+      background: linear-gradient(90deg, #5a3e1f, #7a5530 20%, #a37a45 60%, #78532e 100%);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset, 0 1px 0 rgba(255,220,160,.15) inset;
+      transition: width 1.2s var(--ease); border-radius: 999px;
+    }
+    .stats-list .spear .head{
+      position: absolute; top: 50%; width: 18px; height: 18px;
+      transform: translate(-50%, -50%); left: 0%;
+      background: conic-gradient(from 45deg at 50% 50%, #cfcfcf 0 25%, #9e9e9e 0 50%, #d9d9d9 0 75%, #b9b9b9 0 100%);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35) inset, 0 2px 4px rgba(0,0,0,.45);
+      transition: left 1.2s var(--ease); z-index: 2;
+    }
+    .stats-list .num{
+      font-variant-numeric: tabular-nums; justify-self: end; min-width: 74px;
+      color: #f4efe2; text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    }
+    #statsOverlay .close{
+      justify-self: end; padding: 6px 10px;
+      background: rgba(80,60,30,.35);
+      border: 1px solid rgba(210,180,120,.35);
+      color: #fff; border-radius: 8px; cursor: pointer;
+    }
+
+    /* Mobile : boutons un poil plus petits */
+    @media (max-width: 600px){
+      :root{ --btn-size: 70px; --gap: 12px; }
+      .label{ display:none; }
+    }
+  
+    /* Titre des pertes (sous archers) */
+    #statsOverlay .losses{
+      margin-top: 10px;
+      text-align: center;
+      font-family: 'Charlemagne Std','Cinzel',serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: .4px;
+      color: #f0ead9;
+      text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    }
+
+    /* Libellé flottant sur hover (sort à gauche du bouton) */
+    .btn{
+      overflow: visible; /* pour laisser sortir le libellé */
+    }
+    .btn::before{
+      content: attr(data-label);
+      position: absolute;
+      top: 50%;
+      right: calc(100% + 10px); /* à gauche du bouton */
+      transform: translateY(-50%) translateX(8px);
+      opacity: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: .4px;
+      color: #f6f2e6;
+      
+      
+      border-radius: 10px;
+      
+      pointer-events: none; /* évite de capter le survol */
+      white-space: nowrap;
+      transition: transform .25s var(--ease), opacity .25s var(--ease);
+     font-family:'Cinzel', serif; font-weight:700; font-size:14px; color:#f0ead9; text-shadow:0 1px 2px rgba(0,0,0,.7); }
+    .btn:hover::before{
+      transform: translateY(-50%) translateX(0);
+      opacity: 1;
+    }
+
+    /* Séparateur décoratif pleine largeur (barre épaisse + pointes) */
+    #statsOverlay .sep{
+      position: relative;
+      width: 100%;
+      height: 10px;
+      background: linear-gradient(90deg,
+        rgba(155,120,60,.85) 0%,
+        rgba(210,180,120,.95) 12%,
+        rgba(235,210,150,1) 50%,
+        rgba(210,180,120,.95) 88%,
+        rgba(155,120,60,.85) 100%);
+      box-shadow:
+        0 2px 8px rgba(0,0,0,.35) inset,
+        0 1px 0 rgba(255,240,200,.25);
+      border-radius: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    #statsOverlay .sep::before,
+    #statsOverlay .sep::after{
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 16px;
+      height: 10px;
+      transform: translateY(-50%);
+      background: inherit;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,.35) inset,
+        0 1px 0 rgba(255,240,200,.25);
+    }
+    /* Pointe gauche */
+    #statsOverlay .sep::before{
+      left: -14px;
+      clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    /* Pointe droite */
+    #statsOverlay .sep::after{
+      right: -14px;
+      clip-path: polygon(0% 0%, 0% 100%, 100% 50%);
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+</style>
+</head>
+<body>
+
+  <!-- Overlay héraldique -->
+  <div id="heraldicOverlay" class="overlay" aria-hidden="true">
+    <!-- Remplace src par ton PNG de planche (1920x1080 idéal) -->
+    <img src="https://github.com/NikoBelegPlovan/Azincourt-Chapter1/blob/main/Tableau-Henri-V-heraldique.png?raw=true" alt="Planche héraldique — Henri V"/>
+  </div>
+
+  <!-- Overlay stats -->
+  <div id="statsOverlay" class="overlay" aria-hidden="true">
+    <section class="stats" role="dialog" aria-labelledby="statsTitle">
+      <h2 id="statsTitle">Effectifs — Armée d’Henri V</h2>
+      <audio id="statsNarration" preload="auto">
+        <source src="https://raw.githubusercontent.com/NikoBelegPlovan/Azincourt-Chapter1/main/ElevenLabs_2025-09-07T01_54_14_Martin%20Dupont%20Intime_pvc_sp98_s50_sb75_se0_b_m2.mp3" type="audio/mpeg">
+      </audio>
+      
+
+      <ul class="stats-list" data-animate="false">
+        <li class="stat" data-value="9000">
+          <img class="ico" src="https://via.placeholder.com/40" alt="Icône hommes">
+          <span class="label">Hommes</span>
+          <div class="spear" aria-hidden="true"><div class="shaft"></div><div class="head"></div></div>
+          <span class="num">0</span>
+        </li>
+        <li class="stat" data-value="1000">
+          <img class="ico" src="https://via.placeholder.com/40" alt="Icône cavaliers">
+          <span class="label">Cavaliers</span>
+          <div class="spear" aria-hidden="true"><div class="shaft"></div><div class="head"></div></div>
+          <span class="num">0</span>
+        </li>
+        <li class="stat" data-value="2000">
+          <img class="ico" src="https://via.placeholder.com/40" alt="Icône fantassins">
+          <span class="label">Fantassins</span>
+          <div class="spear" aria-hidden="true"><div class="shaft"></div><div class="head"></div></div>
+          <span class="num">0</span>
+        </li>
+        <li class="stat" data-value="6000">
+          <img class="ico" src="https://via.placeholder.com/40" alt="Icône archers">
+          <span class="label">Archers</span>
+          <div class="spear" aria-hidden="true"><div class="shaft"></div><div class="head"></div></div>
+          <span class="num">0</span>
+        </li>
+      <div class="sep"></div>
+      <div class="losses">Pertes : 600 morts, dont 13 chevaliers</div>
+
+      </ul>
+    </section>
+  </div>
+
+  <!-- Boutons (pile à droite) -->
+  <nav class="ui" aria-label="Actions de la page">
+    <!-- Bouton Héraldique (toggle) -->
+    <button id="btnHeraldique" data-label="Héraldique" class="btn" type="button" aria-pressed="false" aria-controls="heraldicOverlay"  aria-label="Héraldique">
+      <img src="https://raw.githubusercontent.com/NikoBelegPlovan/Azincourt-Chapter1/refs/heads/main/L'heradique.png" alt="Bouton héraldique"/>
+    </button>
+
+    <!-- Bouton Timeline (lien) — image retirée (pixel transparent) -->
+    <a class="btn" id="btnTimeline" data-label="Timeline" href="#" target="_self" rel="noopener"  aria-label="Timeline">
+      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Bouton Timeline (icône retirée)"/>
+    </a>
+
+    <!-- Bouton Effectifs (toggle stats) -->
+    <button id="btnStats" data-label="Effectifs" class="btn" type="button" aria-pressed="false" aria-controls="statsOverlay"  aria-label="Effectifs">
+      <img src="https://raw.githubusercontent.com/NikoBelegPlovan/Azincourt-Chapter1/refs/heads/main/Les-forces.png" alt="Bouton Effectifs"/>
+    </button>
+  </nav>
+
+  <script>
+    (function(){
+      // -------- Utilitaires --------
+      function showOnly(targetId){
+        const overlays = [document.getElementById('heraldicOverlay'), document.getElementById('statsOverlay')];
+        overlays.forEach(ov => {
+          if(!ov) return;
+          const btn = ov.id === 'heraldicOverlay' ? document.getElementById('btnHeraldique') : document.getElementById('btnStats');
+          const shouldShow = ('#'+ov.id) === targetId;
+          ov.classList.toggle('show', shouldShow);
+          ov.setAttribute('aria-hidden', String(!shouldShow));
+          if(btn) btn.setAttribute('aria-pressed', String(shouldShow));
+        });
+      }
+
+      // -------- Héraldiques --------
+      const heraldicOverlay = document.getElementById('heraldicOverlay');
+      const btnHeraldique   = document.getElementById('btnHeraldique');
+
+      btnHeraldique.addEventListener('click', ()=>{
+        const isOpen = heraldicOverlay.classList.contains('show');
+        if(isOpen) showOnly('#none'); else showOnly('#heraldicOverlay');
+      });
+      heraldicOverlay.addEventListener('click', (e)=>{ if(e.target === heraldicOverlay) showOnly('#none'); });
+
+      // -------- Stats --------
+      const statsOverlay = document.getElementById('statsOverlay');
+      const btnStats     = document.getElementById('btnStats');
+      const list         = statsOverlay?.querySelector('.stats-list');
+      const rows         = Array.from(statsOverlay?.querySelectorAll('.stat') || []);
+
+      const audio   = document.getElementById('statsNarration');
+      const btnAudio= statsOverlay?.querySelector('.audio-toggle');
+
+      function animateStats(){
+        if(!list || list.dataset.animate === 'true') return;
+        const max = rows.reduce((m, li)=> Math.max(m, parseInt(li.dataset.value||'0', 10)), 0);
+        rows.forEach(li=>{
+          const target = parseInt(li.dataset.value||'0', 10);
+          const shaft = li.querySelector('.shaft');
+          const head  = li.querySelector('.head');
+          const num   = li.querySelector('.num');
+          const pct = max ? Math.round(target / max * 100) : 0;
+          requestAnimationFrame(()=> { shaft.style.width = pct + '%'; head.style.left = pct + '%'; });
+          const dur = 1200;
+          const t0 = performance.now();
+          function tick(now){
+            const p = Math.min(1, (now - t0)/dur);
+            const eased = p<0.5 ? 2*p*p : -1+(4-2*p)*p;
+            const val = Math.round(eased * target);
+            num.textContent = val.toLocaleString('fr-FR');
+            if(p<1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
+        list.dataset.animate = 'true';
+      }
+
+      function openStats(){
+        showOnly('#statsOverlay');  // ferme l'autre overlay si ouvert
+        // reset stats & audio
+        if(list) list.dataset.animate = 'false';
+        rows.forEach(li=>{
+          const shaft = li.querySelector('.shaft');
+          const head  = li.querySelector('.head');
+          const num   = li.querySelector('.num');
+          if(shaft) shaft.style.width = '0%';
+          if(head)  head.style.left = '0%';
+          if(num)   num.textContent = '0';
+        });
+        if(btnAudio) btnAudio.setAttribute('aria-pressed','false');
+        if(audio) { try{ audio.pause(); audio.currentTime = 0; }catch(e){} }
+        try{ if(audio){ audio.currentTime = 0; audio.play().catch(()=>{}); } }catch(e){}
+        setTimeout(animateStats, 60);
+      }
+      function closeStats(){
+        statsOverlay.classList.remove('show');
+        statsOverlay.setAttribute('aria-hidden', 'true');
+        btnStats.setAttribute('aria-pressed', 'false');
+        // stop audio
+        if(audio) { try{ audio.pause(); audio.currentTime = 0; }catch(e){} }
+        if(btnAudio) btnAudio.setAttribute('aria-pressed','false');
+      }
+
+      btnStats?.addEventListener('click', ()=>{
+        if(statsOverlay.classList.contains('show')) closeStats(); else openStats();
+      });
+      statsOverlay?.addEventListener('click', (e)=>{ if(e.target === statsOverlay) closeStats(); });
+      statsOverlay?.querySelector('.close')?.addEventListener('click', closeStats);
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape'){
+          if(statsOverlay.classList.contains('show')) closeStats();
+          if(heraldicOverlay.classList.contains('show')) showOnly('#none');
+        }
+      });
+
+      // Audio toggle
+      btnAudio?.addEventListener('click', ()=>{
+        if(!audio) return;
+        if(audio.paused){
+          audio.currentTime = 0;
+          audio.play().then(()=>{
+            btnAudio.setAttribute('aria-pressed','true');
+          }).catch(()=>{});
+        }else{
+          audio.pause();
+          btnAudio.setAttribute('aria-pressed','false');
+        }
+      });
+      // Stop audio when stats overlay fully hidden
+      statsOverlay?.addEventListener('transitionend', ()=>{
+        if(!statsOverlay.classList.contains('show')){
+          if(audio) { try{ audio.pause(); audio.currentTime = 0; }catch(e){} }
+          if(btnAudio) btnAudio.setAttribute('aria-pressed','false');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

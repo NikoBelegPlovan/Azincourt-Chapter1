@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Choisis un royaume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --hover-scale: 1.04;
+      --ease: cubic-bezier(.2,.7,.2,1);
+      --label-size: 16px;
+      --label-color: #f0ead9;
+      --shadow-text: 0 2px 4px rgba(0,0,0,.65);
+    }
+    *{ box-sizing: border-box }
+    html,body{ height:100%; margin:0 }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #000 url('https://github.com/NikoBelegPlovan/Azincourt-Chapter1/blob/main/Choisi-un-royaume-tableau.png?raw=true') center / cover no-repeat fixed;
+      overflow:hidden;
+    }
+
+    /* Deux zones cliquables */
+    .split{
+      position: fixed; inset: 0; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0; place-items: center; z-index: 1;
+    }
+    .side{ position: relative; width:100%; height:100%; display:grid; place-items: center; }
+
+    /* Légère teinte de côté (très légère, optionnelle) */
+    .side.fr::before, .side.en::before{
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background: transparent;
+    }
+
+    /* Boutons gonfanon */
+    .gonfanon{
+      position: relative;
+      width: min(28vw, 360px);
+      max-width: 50vh;
+      transform: translateZ(0);
+      transition: transform .25s var(--ease), filter .25s var(--ease);
+      outline: none; border: none; background: transparent; padding: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      overflow: visible;
+    }
+    .gonfanon img{
+      display:block; width:100%; height:auto; object-fit: contain;
+      filter: none; /* pas d'ombre ajoutée : le PNG l'a déjà */
+      transition: transform .25s var(--ease);
+      pointer-events: none;
+    }
+    .gonfanon:hover{ transform: scale(var(--hover-scale)); }
+    .gonfanon:focus-visible{ outline: 2px dashed rgba(255,255,255,.6); outline-offset: 4px; }
+
+    /* Label au survol (comme tes autres boutons, sans fond, typo Cinzel) */
+    /* Direction par côté */
+    .side.fr .side.en /* Lien cliquable autour du gonfanon */
+    .pick{ display: inline-block; text-decoration: none; }
+
+    /* Titre en haut (optionnel) */
+    .title{
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      font-family: 'Cinzel', serif; font-weight: 700; font-size: clamp(20px, 4vw, 40px);
+      color: #f6f2e6; text-shadow: var(--shadow-text); z-index: 2; user-select: none;
+    }
+
+    @media (max-height: 700px){ .gonfanon{ width: min(30vw, 260px); } }
+  </style>
+</head>
+<body>
+<div class="split" role="list">
+    <!-- Côté gauche : France (bleu) -->
+    <section class="side fr" aria-label="Royaume de France" role="listitem">
+      <a class="pick gonfanon" id="btnFrance" href="france.html" target="_self" rel="noopener"
+         aria-label="Royaume de France">
+        <img src="https://github.com/NikoBelegPlovan/Azincourt-Chapter1/blob/main/Gonfanon-Francais-Bouton.png?raw=true" alt="Gonfanon du royaume de France">
+      </a>
+    </section>
+
+    <!-- Côté droit : Angleterre (rouge) -->
+    <section class="side en" aria-label="Royaume d'Angleterre" role="listitem">
+      <a class="pick gonfanon" id="btnAngleterre" href="henriV.html" target="_self" rel="noopener"
+         aria-label="Royaume d’Angleterre">
+        <img src="https://github.com/NikoBelegPlovan/Azincourt-Chapter1/blob/main/Gonfanon-Anglais-Bouton.png?raw=true" alt="Gonfanon du royaume d’Angleterre">
+      </a>
+    </section>
+  </div>
+</body>
+</html>
